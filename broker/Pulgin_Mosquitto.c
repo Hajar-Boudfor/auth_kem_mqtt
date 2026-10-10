@@ -34,7 +34,7 @@
  *       -o auth_kem.so -loqs -lssl -lcrypto
  */
 
-#define _GNU_SOURCE          /* pour memmem() */
+#define _GNU_SOURCE         
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,24 +51,24 @@
 
 MOSQUITTO_PLUGIN_DECLARE_VERSION(5);
 
-/* ── Paramètres ─────────────────────────────────────────────── */
+/* Paramètres */
 #define AUTH_METHOD        "KEM"
 #define DEFAULT_SK_PATH    "/mosquitto/keys/broker_sk_s.bin"
 #define DEFAULT_PK_PATH    "/mosquitto/keys/broker_pk_s.bin"
 #define DEFAULT_CERT_PATH  "/mosquitto/keys/broker_cert.der"
 
 #define NONCE_LEN   32
-#define PK_LEN      OQS_KEM_ml_kem_512_length_public_key     /* 800  */
-#define SK_LEN      OQS_KEM_ml_kem_512_length_secret_key     /* 1632 */
-#define CT_LEN      OQS_KEM_ml_kem_512_length_ciphertext     /* 768  */
-#define SS_LEN      OQS_KEM_ml_kem_512_length_shared_secret  /* 32   */
+#define PK_LEN      OQS_KEM_ml_kem_512_length_public_key     
+#define SK_LEN      OQS_KEM_ml_kem_512_length_secret_key     
+#define CT_LEN      OQS_KEM_ml_kem_512_length_ciphertext     
+#define SS_LEN      OQS_KEM_ml_kem_512_length_shared_secret 
 #define HMAC_LEN    32
 
-#define CERT_MAX_LEN        8192                             /* limite de sécurité */
+#define CERT_MAX_LEN        8192                             
 
-#define CLIENT_HELLO_LEN    (NONCE_LEN + PK_LEN)             /* 832  */
+#define CLIENT_HELLO_LEN    (NONCE_LEN + PK_LEN)         
 /* BROKER_HELLO = r_b || ct_e || cert : taille variable (800 + g_cert_len) */
-#define CLIENT_FINISHED_LEN (CT_LEN + HMAC_LEN)              /* 800  */
+#define CLIENT_FINISHED_LEN (CT_LEN + HMAC_LEN)           
 
 /* Labels HMAC : identiques au client Python (24 octets, sans '\0') */
 #define LABEL_CLIENT_FINISHED "KEM-MQTT client finished"
@@ -77,7 +77,7 @@ MOSQUITTO_PLUGIN_DECLARE_VERSION(5);
 
 /* Transcript HMAC = label || r_c || pk_e || r_b || ct_e || cert || ct_s
  * Taille fixe sans cert = 2424 ; buffer dimensionné pour le cert maximal */
-#define HMAC_FIXED_LEN (LABEL_LEN + 2 * NONCE_LEN + PK_LEN + 2 * CT_LEN)    /* 2424 */
+#define HMAC_FIXED_LEN (LABEL_LEN + 2 * NONCE_LEN + PK_LEN + 2 * CT_LEN)   
 #define HMAC_DATA_MAX  (HMAC_FIXED_LEN + CERT_MAX_LEN)
 
 /* ── État du handshake entre la phase 2 et la phase 4 ─────────
@@ -87,7 +87,7 @@ typedef struct {
     uint8_t pk_e[PK_LEN];
     uint8_t r_b[NONCE_LEN];
     uint8_t ct_e[CT_LEN];
-    uint8_t ss_e[SS_LEN];        /* secret : effacé en fin de handshake */
+    uint8_t ss_e[SS_LEN];       
 } kem_session_t;
 
 static mosquitto_plugin_id_t *mosq_pid = NULL;
@@ -99,9 +99,7 @@ static size_t   g_cert_len = 0;       /* taille réelle du certificat */
 static kem_session_t g_session;
 
 
-/* ─────────────────────────────────────────────────────────────
- * Lecture d'un fichier de clé de taille exacte
- * ───────────────────────────────────────────────────────────── */
+/*  Lecture d'un fichier de clé de taille exacte */
 static int load_key_file(const char *path, uint8_t *buf, size_t len)
 {
     FILE *f = fopen(path, "rb");
@@ -123,10 +121,8 @@ static int load_key_file(const char *path, uint8_t *buf, size_t len)
 }
 
 
-/* ─────────────────────────────────────────────────────────────
- * Lecture d'un fichier de taille variable (certificat DER)
- * Lit au plus max_len octets ; la taille lue est écrite dans *out_len
- * ───────────────────────────────────────────────────────────── */
+/* Lecture d'un fichier de taille variable (certificat DER)
+ * Lit au plus max_len octets ; la taille lue est écrite dans *out_len*/
 static int load_cert_file(const char *path, uint8_t *buf, size_t max_len, size_t *out_len)
 {
     FILE *f = fopen(path, "rb");
@@ -149,9 +145,7 @@ static int load_cert_file(const char *path, uint8_t *buf, size_t max_len, size_t
 }
 
 
-/* ─────────────────────────────────────────────────────────────
- * PHASE 2 — CONNECT reçu : CLIENT_HELLO → BROKER_HELLO
- * ───────────────────────────────────────────────────────────── */
+/* PHASE 2 — CONNECT reçu : CLIENT_HELLO → BROKER_HELLO*/
 static int kem_auth_start(int event, void *event_data, void *userdata)
 {
     struct mosquitto_evt_extended_auth *ed = event_data;
@@ -208,9 +202,7 @@ fail:
 }
 
 
-/* ─────────────────────────────────────────────────────────────
- * PHASE 4 — AUTH reçu : CLIENT_FINISHED → CONNACK (tau_b)
- * ───────────────────────────────────────────────────────────── */
+/* PHASE 4 — AUTH reçu : CLIENT_FINISHED → CONNACK (tau_b)*/
 static int kem_auth_continue(int event, void *event_data, void *userdata)
 {
     struct mosquitto_evt_extended_auth *ed = event_data;
@@ -295,9 +287,7 @@ done:
 }
 
 
-/* ─────────────────────────────────────────────────────────────
- * Initialisation : chargement de (pk_s, sk_s) et du certificat (Phase 0)
- * ───────────────────────────────────────────────────────────── */
+/* Initialisation : chargement de (pk_s, sk_s) et du certificat (Phase 0) */
 int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **user_data,
                           struct mosquitto_opt *opts, int opt_count)
 {
