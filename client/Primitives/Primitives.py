@@ -1,6 +1,6 @@
 """
 Primitives.py — Primitives cryptographiques du client KEM-MQTT
-===============================================================
+*
 Reproduction et extension de Samandari & Gritti (2023)
 Bibliothèques : liboqs-python (Open Quantum Safe), cryptography
 
@@ -19,9 +19,7 @@ from cryptography.hazmat.primitives import hashes
 KEM_ALGORITHM = 'ML-KEM-512'
 
 
-# ─────────────────────────────────────────────────────────────
 # Primitives KEM (ML-KEM-512)
-# ─────────────────────────────────────────────────────────────
 
 def kem_generate_keypair():
     """
@@ -54,9 +52,8 @@ def kem_decapsulate(ciphertext, secret_key):
     return shared_secret
 
 
-# ─────────────────────────────────────────────────────────────
 # Dérivation de clé de session (HKDF-SHA256)
-# ─────────────────────────────────────────────────────────────
+# 
 
 def derive_session_key(ss_e, ss_s, r_c, r_b):
     """
@@ -75,9 +72,8 @@ def derive_session_key(ss_e, ss_s, r_c, r_b):
     return hkdf.derive(ss_e + ss_s)
 
 
-# ─────────────────────────────────────────────────────────────
+
 # Intégrité (HMAC-SHA256)
-# ─────────────────────────────────────────────────────────────
 
 def compute_hmac(key, *messages):
     """
