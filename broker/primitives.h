@@ -9,9 +9,9 @@
 #include <stddef.h>
 
 /* HKDF-SHA256 — dérivation de la clé de session
- * Entrées : ss_e, ss_s, r_c, r_b (chacun 32 bytes)
+ * Entrées : ss_e, ss_s, r_c, r_b 
  * IKM = ss_e || ss_s, salt = r_c || r_b, info = "KEM-MQTT-v1"
- * Sortie  : session_key (32 bytes)
+ * Sortie  : session_key 
  * Retourne 1 si succès, 0 sinon
  */
 int derive_session_key(
