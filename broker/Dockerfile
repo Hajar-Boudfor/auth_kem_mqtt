@@ -4,7 +4,6 @@ RUN apk add --no-cache \
     build-base cmake git \
     openssl-dev cjson-dev
 
-# En-têtes de Mosquitto 2.1.2 (même version que l'image d'exécution)
 RUN git clone --depth 1 --branch v2.1.2 \
     https://github.com/eclipse/mosquitto.git /opt/mosquitto-src
 
@@ -23,7 +22,6 @@ RUN gcc -I/usr/local/include \
         Pulgin_Mosquitto.c primitives.c \
         -o auth_kem.so -loqs -lssl -lcrypto
 
-# Version figée : identique au broker SIG (comparaison équitable)
 FROM eclipse-mosquitto:2.1.2-alpine
 COPY --from=builder /usr/local/lib/liboqs.so* /usr/local/lib/
 RUN mkdir -p /mosquitto/plugins /mosquitto/keys
