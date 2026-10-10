@@ -117,7 +117,6 @@ Mean over 100 handshakes, client and broker on the same host (the first handshak
 | Metric | Value |
 |---|---|
 | Mean handshake time | 2.01 ms |
-| AuthenticationData exchanged | 5,957 bytes |
 
 
 ## Reference
