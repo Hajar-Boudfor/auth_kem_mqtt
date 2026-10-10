@@ -1,6 +1,6 @@
 """
 generate_broker_keys.py — Phase 0 (hors ligne) du schéma KEM
-=============================================================
+
 Génère UNE SEULE FOIS la paire statique ML-KEM-512 du broker :
   keys/broker_pk_s.bin  (800 octets)   → copiée chez le client (pinning)
   keys/broker_sk_s.bin  (1632 octets)  → reste sur le broker, lisible par lui seul
