@@ -6,10 +6,10 @@
  *   HKDF-SHA256, HMAC-SHA256 : primitives.c
  *
  * Handshake MQTT5 Enhanced Authentication (AuthenticationMethod = "KEM") :
- *   CONNECT   client → broker : r_c || pk_e          (832 B)
- *   AUTH 0x18 broker → client : r_b || ct_e || cert   (800 B + cert, ~4293 B)
- *   AUTH 0x18 client → broker : ct_s || tau_c         (800 B)
- *   CONNACK   broker → client : tau_b                 (32 B)
+ *   CONNECT   client → broker : r_c || pk_e          
+ *   AUTH 0x18 broker → client : r_b || ct_e || cert   
+ *   AUTH 0x18 client → broker : ct_s || tau_c        
+ *   CONNACK   broker → client : tau_b                 
  *
  *   (ct_e, ss_e) = ML-KEM.Encaps(pk_e)     broker
  *   (ct_s, ss_s) = ML-KEM.Encaps(pk_s)     client
@@ -25,9 +25,9 @@
  * ca.crt : il vérifie cert, puis en extrait pk_s.
  *
  * Options mosquitto.conf :
- *   plugin_opt_sk_path  chemin de broker_sk_s.bin  (1632 B)
- *   plugin_opt_pk_path  chemin de broker_pk_s.bin  (800 B)
- *   plugin_opt_cert_path chemin de broker_cert.der (taille variable, ~3493 B)
+ *   plugin_opt_sk_path  chemin de broker_sk_s.bin  
+ *   plugin_opt_pk_path  chemin de broker_pk_s.bin  
+ *   plugin_opt_cert_path chemin de broker_cert.der 
  *
  * Compile avec :
  *   gcc -I<mosquitto>/include -fPIC -shared Pulgin_Mosquitto.c primitives.c \
