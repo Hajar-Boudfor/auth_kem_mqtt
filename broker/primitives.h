@@ -23,8 +23,8 @@ int derive_session_key(
 );
 
 /* HMAC-SHA256 — calcul d'intégrité
- * Entrées : key (32 bytes), data, data_len
- * Sortie  : hmac_out (32 bytes)
+ * Entrées : key , data, data_len
+ * Sortie  : hmac_out
  * Retourne 1 si succès, 0 sinon
  */
 int compute_hmac(
