@@ -48,7 +48,6 @@ tau_b  = HMAC-SHA256(K_sess, "KEM-MQTT broker finished" || T)
 The client verifies `cert` with the CA certificate, extracts `pk_s`, and accepts the broker only if `tau_b` is valid.
 Only the holder of `sk_s` can decapsulate `ct_s` and therefore compute `K_sess`.
 
-As in the original scheme [1], only the broker is authenticated; the client has no certified key.
 
 ## Repository structure
 
