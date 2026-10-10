@@ -17,13 +17,7 @@ The scheme is based on the KEM-based authentication proposed by Samandari and Gr
 | HKDF-SHA256 | Derivation of the session key |
 | HMAC-SHA256 | Handshake confirmation (`tau_c`, `tau_b`) |
 
-Differences from the original scheme [1]:
 
-- ML-KEM-512 (FIPS 203) instead of round-3 Kyber-512.
-- The broker static key `pk_s` is distributed in an X.509 certificate signed with ML-DSA-44 by a dedicated CA.
-- The key derivation and the transcript MACs are fully specified.
-
-As in [1], only the broker is authenticated; the client has no certified key.
 
 ## Handshake
 
@@ -125,11 +119,6 @@ Mean over 100 handshakes, client and broker on the same host (the first handshak
 | Mean handshake time | 2.01 ms |
 | AuthenticationData exchanged | 5,957 bytes |
 
-## Security notes
-
-- This is a research prototype. It has not been audited and must not be used in production.
-- Keep `ca/ca.key` and `keys/broker_sk_s.bin` private. Never commit them.
-- The client is not authenticated by this scheme.
 
 ## Reference
 
