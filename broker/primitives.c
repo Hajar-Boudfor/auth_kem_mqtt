@@ -57,7 +57,7 @@ int derive_session_key(
 
     ok = (EVP_KDF_derive(ctx, session_key, 32, params) == 1);
     EVP_KDF_CTX_free(ctx);
-    OPENSSL_cleanse(ikm, sizeof(ikm));   /* ss_e || ss_s : secret */
+    OPENSSL_cleanse(ikm, sizeof(ikm)); 
     return ok;
 }
 
