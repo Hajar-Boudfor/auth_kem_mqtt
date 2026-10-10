@@ -1,35 +1,37 @@
-/* Pulgin_Mosquitto.c — plugin KEM (auth_kem.so)
+/* Pulgin_Mosquitto.c - plugin d'authentification KEM pour Mosquitto (auth_kem.so)
  *
- * Plugin Mosquitto pour l'authentification post-quantique par KEM
- * (schéma de Samandari & Gritti 2023, Figure 3 ; fig:kem_handshake du rapport).
- *   ML-KEM-512 (FIPS 203) : échange éphémère (pk_e) + encapsulation statique (pk_s)
- *   HKDF-SHA256, HMAC-SHA256 : primitives.c
+ *   Description
+ *   Implémente une authentification post-quantique du broker par KEM pour
+ *   MQTT 5.0, fondée sur le schéma proposé par Samandari et Gritti [1]. Elle
+ *   s'exécute dans le broker Mosquitto via le mécanisme d'Enhanced
+ *   Authentication (paquet AUTH), sans modification du protocole MQTT.
+ *   Les deux échanges de clés utilisent ML-KEM-512 ; la dérivation de clé et les vérifications finales utilisent HKDF-SHA256 et HMAC-SHA256 (dans primitives.c).
+ *   Méthode d'authentification : "KEM".
  *
- * Handshake MQTT5 Enhanced Authentication (AuthenticationMethod = "KEM") :
- *   CONNECT   client → broker : r_c || pk_e          
- *   AUTH 0x18 broker → client : r_b || ct_e || cert   
- *   AUTH 0x18 client → broker : ct_s || tau_c        
- *   CONNACK   broker → client : tau_b                 
+ * Les messages :
+ *   CONNECT    client -> broker : r_c || pk_e
+ *   AUTH 0x18  broker -> client : r_b || ct_e || cert
+ *   AUTH 0x18  client -> broker : ct_s || tau_c
+ *   CONNACK    broker -> client : tau_b
  *
- *   (ct_e, ss_e) = ML-KEM.Encaps(pk_e)     broker
- *   (ct_s, ss_s) = ML-KEM.Encaps(pk_s)     client
- *   K_sess = HKDF-SHA256(IKM = ss_e || ss_s, salt = r_c || r_b, info = "KEM-MQTT-v1")
+ * Ce que chacun calcule :
+ *   (ct_e, ss_e) = Encaps(pk_e)     côté broker, pk_e vient du client
+ *   (ct_s, ss_s) = Encaps(pk_s)     côté client, pk_s vient du certificat
+ *   K_sess = HKDF-SHA256(ss_e || ss_s, sel = r_c || r_b, info = "KEM-MQTT-v1")
  *   T      = r_c || pk_e || r_b || ct_e || cert || ct_s
- *   cert   = certificat X.509 de pk_s (ML-KEM-512) signé par la CA (ML-DSA-44), DER
  *   tau_c  = HMAC(K_sess, "KEM-MQTT client finished" || T)
  *   tau_b  = HMAC(K_sess, "KEM-MQTT broker finished" || T)
  *
- * Phase 0 (hors ligne) : la paire statique (pk_s, sk_s) est générée une seule
- * fois par generate_broker_keys.py, et cert par ca/generate_certificate.sh
- * (OpenSSL 3.5). Le plugin les charge au démarrage. Le client ne connaît que
- * ca.crt : il vérifie cert, puis en extrait pk_s.
+ * cert est le certificat X.509 (format DER) qui contient pk_s. Il est signé
+ * par notre CA en ML-DSA-44.
  *
- * Options mosquitto.conf :
- *   plugin_opt_sk_path  chemin de broker_sk_s.bin  
- *   plugin_opt_pk_path  chemin de broker_pk_s.bin  
- *   plugin_opt_cert_path chemin de broker_cert.der 
- *
- * Compile avec :
+ * Avant de lancer le broker (une seule fois) :
+ *   - generate_broker_keys.py crée la paire statique pk_s / sk_s
+ *   - ca/generate_certificate.sh crée le certificat (OpenSSL 3.5)
+ * Le broker charge ces fichiers au démarrage. Le client n'a besoin que de
+ * ca.crt : il vérifie le certificat, puis récupère pk_s dedans.
+ 
+ * Compilation :
  *   gcc -I<mosquitto>/include -fPIC -shared Pulgin_Mosquitto.c primitives.c \
  *       -o auth_kem.so -loqs -lssl -lcrypto
  */
@@ -66,7 +68,7 @@ MOSQUITTO_PLUGIN_DECLARE_VERSION(5);
 
 #define CERT_MAX_LEN        8192                             
 
-#define CLIENT_HELLO_LEN    (NONCE_LEN + PK_LEN)         
+#define CLIENT_HELLO_LEN            
 /* BROKER_HELLO = r_b || ct_e || cert : taille variable (800 + g_cert_len) */
 #define CLIENT_FINISHED_LEN (CT_LEN + HMAC_LEN)           
 
