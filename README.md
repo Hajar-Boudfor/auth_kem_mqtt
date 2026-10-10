@@ -17,7 +17,15 @@ The scheme is based on the KEM-based authentication proposed by Samandari and Gr
 | HKDF-SHA256 | Derivation of the session key |
 | HMAC-SHA256 | Handshake confirmation (`tau_c`, `tau_b`) |
 
+## Software stack
 
+| Component | Role |
+|---|---|
+| Eclipse Mosquitto 2.1.2 | MQTT broker; the authentication runs as a C plugin (`auth_kem.so`) |
+| Eclipse Paho MQTT (Python, 2.1.0) | MQTT client, extended to send and receive `AUTH` packets |
+| liboqs / liboqs-python | ML-KEM-512 implementation (broker and client) |
+| OpenSSL 3.5 | CA, ML-DSA-44 signatures and X.509 certificates |
+| Docker | Builds and runs the broker with the plugin |
 
 ## Handshake
 
@@ -39,6 +47,8 @@ tau_b  = HMAC-SHA256(K_sess, "KEM-MQTT broker finished" || T)
 
 The client verifies `cert` with the CA certificate, extracts `pk_s`, and accepts the broker only if `tau_b` is valid.
 Only the holder of `sk_s` can decapsulate `ct_s` and therefore compute `K_sess`.
+
+As in the original scheme [1], only the broker is authenticated; the client has no certified key.
 
 ## Repository structure
 
@@ -65,14 +75,63 @@ Private keys (`ca/ca.key`, `keys/broker_sk_s.bin`) are not included in this repo
 
 ## Requirements
 
-- Docker and Docker Compose
-- Python 3.10 or later
-- [liboqs](https://github.com/open-quantum-safe/liboqs) and [liboqs-python](https://github.com/open-quantum-safe/liboqs-python)
-- Python packages: `paho-mqtt` (2.1.0), `cryptography`
+Tested on Ubuntu (x86_64). You need:
 
-The broker image builds liboqs and the plugin itself, so nothing else needs to be installed on the host for the broker.
+- Git, Docker and Docker Compose
+- Python 3.10 or later
+- Build tools for liboqs: `gcc`, `cmake`, `ninja`, OpenSSL development headers
+
+The broker runs in Docker: its image builds liboqs and the plugin itself.
+The key generation script and the client run on the host, so liboqs and liboqs-python must be installed there.
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Hajar-Boudfor/auth_kem_mqtt.git
+cd auth_kem_mqtt
+```
+
+### 2. Install the build tools
+
+```bash
+sudo apt update
+sudo apt install -y git cmake ninja-build gcc libssl-dev python3-venv python3-pip
+```
+
+### 3. Build and install liboqs
+
+```bash
+git clone --depth 1 --branch 0.15.0 https://github.com/open-quantum-safe/liboqs.git
+cmake -S liboqs -B liboqs/build -GNinja -DBUILD_SHARED_LIBS=ON
+cmake --build liboqs/build
+sudo cmake --build liboqs/build --target install
+sudo ldconfig
+```
+
+Version 0.15.0 is the one used in the broker image (`broker/Dockerfile`).
+
+### 4. Create a Python environment and install the packages
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install paho-mqtt==2.1.0 cryptography
+pip install git+https://github.com/open-quantum-safe/liboqs-python.git
+```
+
+Check that ML-KEM-512 is available:
+
+```bash
+python3 -c "import oqs; print('ML-KEM-512' in oqs.get_enabled_kem_mechanisms())"
+```
+
+The command must print `True`.
 
 ## Usage
+
+All commands are run from the root of the repository, with the Python environment activated (`source venv/bin/activate`).
 
 ### 1. Generate the broker key pair (once)
 
@@ -94,20 +153,34 @@ cp ca/ca.crt client/keys/ca.crt
 ```
 
 This creates `ca/ca.key`, `ca/ca.crt` and `keys/broker_cert.der`.
+If you regenerate the CA, copy the new `ca.crt` to `client/keys/` again.
 
 ### 3. Start the broker
 
 ```bash
-docker compose up --build -d
+sudo docker compose up --build -d
 ```
 
 The broker listens on port 1883 and only accepts clients that complete the KEM handshake (`allow_anonymous false`).
+To follow the broker logs:
+
+```bash
+sudo docker compose logs -f
+```
 
 ### 4. Run the client
 
 ```bash
 cd client
 python3 Client_mqtt.py
+```
+
+The client connects to `localhost:1883`. To use another broker address, edit `BROKER_HOST` and `BROKER_PORT` in `client/Client_mqtt.py`.
+
+### 5. Stop the broker
+
+```bash
+sudo docker compose down
 ```
 
 ## Results
@@ -117,7 +190,6 @@ Mean over 100 handshakes, client and broker on the same host (the first handshak
 | Metric | Value |
 |---|---|
 | Mean handshake time | 2.01 ms |
-
 
 ## Reference
 
