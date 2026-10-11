@@ -10,11 +10,7 @@ Pendant le handshake, le client reçoit cert[pk_s] dans le BROKER_HELLO et :
   2. vérifie l'émetteur, le nom du broker et la période de validité ;
   3. extrait pk_s (ML-KEM-512) du certificat → sert ensuite à Encaps(pk_s).
 
-Pourquoi liboqs et pas seulement `cryptography` ?
-  `cryptography` sait lire (parser) un certificat ML-DSA / ML-KEM, mais pas
-  encore vérifier sa signature ni exposer ces clés (« Unknown key type »).
-  On lit donc les champs avec `cryptography` et on vérifie avec liboqs.
-  La signature X.509 porte sur tbs_certificate_bytes (RFC 5280, §4.1.1.3).
+
 """
 
 import datetime
